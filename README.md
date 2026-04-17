@@ -4,24 +4,9 @@ The Smart Room Monitoring System is an AI-based automation project that continuo
 The project is developed using Python and demonstrates how autonomous systems can improve comfort, safety, and energy efficiency in smart homes and offices.
 
 
-
 Features
+  The system provides real-time monitoring of temperature, humidity, light, motion, and air quality. Based on these values, it automatically controls devices such    as AC, heater, fan, and lights. It also supports motion detection for occupancy tracking, air quality alerts for safety, and a live dashboard to display sensor     values and device status.
 
-  Real-time room monitoring
-  
-  Temperature-based AC and heater control
-
-  Humidity-based fan control
-
-  Occupancy-based lighting control
-
-  Air quality monitoring and alerts
-
-  Browser-based live dashboard
-
-  Console-based monitoring support
-
-Scenario simulation for testing different room conditions
 
 
 Technologies Used
