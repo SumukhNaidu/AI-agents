@@ -6,35 +6,35 @@ The project is developed using Python and demonstrates how autonomous systems ca
 
 
 Features
-Real-time room monitoring
+  Real-time room monitoring
+  
+  Temperature-based AC and heater control
 
-Temperature-based AC and heater control
+  Humidity-based fan control
 
-Humidity-based fan control
+  Occupancy-based lighting control
 
-Occupancy-based lighting control
+  Air quality monitoring and alerts
 
-Air quality monitoring and alerts
+  Browser-based live dashboard
 
-Browser-based live dashboard
-
-Console-based monitoring support
+  Console-based monitoring support
 
 Scenario simulation for testing different room conditions
 
 
 Technologies Used
-Python
+ Python
 
-HTML
+ HTML
 
-CSS
+ CSS
 
-JavaScript
+ JavaScript
 
-HTTP Server
+ HTTP Server
 
-Dataclasses
+ Dataclasses
 
 Rule-Based AI Logic
 
