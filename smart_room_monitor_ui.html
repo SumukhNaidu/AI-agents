@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Room Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f4f6f9; --surface:#fff; --border:#e2e8f0; --text:#1a2332; --muted:#8898aa;
+  --blue:#3b82f6; --green:#10b981; --amber:#f59e0b; --red:#ef4444;
+  --shadow:0 1px 4px rgba(0,0,0,0.07); --r:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Header */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:1rem;font-weight:600}.logo span{color:var(--blue)}
+.header-right{display:flex;align-items:center;gap:16px}
+#clock{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted)}
+.badge{display:flex;align-items:center;gap:6px;font-size:.72rem;font-weight:500;color:var(--muted);background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:20px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dot.live{background:var(--green);animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Layout */
+main{max-width:1100px;margin:0 auto;padding:28px 24px}
+.section-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px}
+
+/* Controls */
+.controls{display:flex;align-items:center;gap:10px;margin-bottom:28px;flex-wrap:wrap}
+.btn{font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;padding:8px 20px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+.btn.start{background:var(--blue);color:#fff;border-color:var(--blue)}.btn.start:hover{background:#2563eb}
+.btn.stop{border-color:var(--red);color:var(--red)}.btn.stop:hover{background:#fef2f2}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.div{width:1px;height:28px;background:var(--border);margin:0 4px}
+.sc-label{font-size:.72rem;color:var(--muted);white-space:nowrap}
+.chip{font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:500;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--amber);color:var(--amber)}
+.chip.active{background:#fffbeb;border-color:var(--amber);color:var(--amber)}
+
+/* Alert */
+.alert-bar{display:none;align-items:center;gap:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:var(--r);padding:12px 16px;margin-bottom:20px;font-size:.82rem;color:#b91c1c}
+.alert-bar.show{display:flex}
+
+/* Stats */
+.stats-bar{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);margin-bottom:20px}
+.stat{flex:1;padding:14px 18px;border-right:1px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat-label{font-size:.63rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:3px}
+.stat-value{font-size:1.15rem;font-weight:600;font-family:'DM Mono',monospace;color:var(--text)}
+.stat-value.blue{color:var(--blue)}.stat-value.amber{color:var(--amber)}
+.occ{display:flex;align-items:center;gap:6px}
+.occ-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.occ-dot.on{background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 1.4s infinite}
+
+/* Sensor grid */
+.sensor-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:800px){.sensor-grid{grid-template-columns:repeat(3,1fr)}}
+.sensor-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 16px;box-shadow:var(--shadow);transition:border-color .3s,box-shadow .3s}
+.sensor-card.warn{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.08)}
+.sensor-card.alert{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.08)}
+.s-icon{font-size:1.3rem;margin-bottom:10px;display:block}
+.s-label{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px}
+.s-value{font-size:1.7rem;font-weight:600;color:var(--text);line-height:1;font-family:'DM Mono',monospace}
+.s-unit{font-size:.7rem;color:var(--muted);margin-top:2px}
+.s-tag{display:inline-block;margin-top:10px;font-size:.63rem;font-weight:600;padding:3px 8px;border-radius:4px;background:var(--bg);color:var(--muted)}
+.s-tag.good{background:#ecfdf5;color:var(--green)}.s-tag.warn{background:#fffbeb;color:var(--amber)}.s-tag.danger{background:#fef2f2;color:var(--red)}
+
+/* Bottom grid */
+.bottom-grid{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:14px}
+@media(max-width:800px){.bottom-grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.panel-title{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px}
+
+/* Devices */
+.device{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;border:1px solid var(--border);margin-bottom:8px;transition:all .25s}
+.device:last-child{margin-bottom:0}
+.device.on{background:#f0fdf4;border-color:var(--green)}
+.d-name{display:flex;align-items:center;gap:8px;font-size:.8rem;font-weight:500}
+.d-tag{font-size:.65rem;font-weight:600;padding:3px 10px;border-radius:4px;background:var(--bg);color:var(--muted);border:1px solid var(--border);transition:all .25s}
+.device.on .d-tag{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* Chart */
+canvas{display:block;width:100%;height:140px}
+
+/* Log */
+.log-scroll{max-height:196px;overflow-y:auto}
+.log-scroll::-webkit-scrollbar{width:4px}
+.log-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.log-row{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.75rem;line-height:1.5;animation:fadein .3s ease}
+.log-row:last-child{border-bottom:none}
+.log-t{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);white-space:nowrap;padding-top:1px}
+.log-empty{font-size:.78rem;color:var(--muted);text-align:center;padding:24px 0}
+@keyframes fadein{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Smart<span>Room</span> Monitor</div>
+  <div class="header-right">
+    <div id="clock">--:--:--</div>
+    <div class="badge"><div class="dot" id="live-dot"></div><span id="live-text">Idle</span></div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn start" id="btn-start" onclick="startMonitor()">▶ Start</button>
+    <button class="btn stop"  id="btn-stop"  onclick="stopMonitor()" disabled>■ Stop</button>
+    <div class="div"></div>
+    <span class="sc-label">Simulate:</span>
+    <button class="chip" onclick="applyScenario('normal',this)">Normal</button>
+    <button class="chip" onclick="applyScenario('hot',this)">🔥 Hot</button>
+    <button class="chip" onclick="applyScenario('cold',this)">❄️ Cold</button>
+    <button class="chip" onclick="applyScenario('humid',this)">💧 Humid</button>
+    <button class="chip" onclick="applyScenario('bad_air',this)">😷 Bad Air</button>
+    <button class="chip" onclick="applyScenario('dark',this)">🌑 Dark</button>
+    <button class="chip" onclick="applyScenario('empty',this)">🚶 Empty</button>
+  </div>
+
+  <!-- Alert -->
+  <div class="alert-bar" id="alert-bar">
+    <span>⚠️</span><div id="alert-text"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-label">Cycle</div><div class="stat-value blue" id="s-cycle">0</div></div>
+    <div class="stat"><div class="stat-label">Actions</div><div class="stat-value" id="s-actions">0</div></div>
+    <div class="stat"><div class="stat-label">Alerts</div><div class="stat-value amber" id="s-alerts">0</div></div>
+    <div class="stat"><div class="stat-label">Uptime</div><div class="stat-value" id="s-uptime">00:00</div></div>
+    <div class="stat">
+      <div class="stat-label">Occupancy</div>
+      <div class="stat-value occ"><div class="occ-dot" id="occ-dot"></div><span id="occ-text">Vacant</span></div>
+    </div>
+  </div>
+
+  <!-- Sensors -->
+  <div class="section-label">Live Sensor Readings</div>
+  <div class="sensor-grid">
+    <div class="sensor-card" id="c-temp">
+      <span class="s-icon">🌡️</span>
+      <div class="s-label">Temperature</div>
+      <div class="s-value" id="v-temp">--</div>
+      <div class="s-unit">°C</div>
+      <div class="s-tag" id="t-temp">—</div>
+    </div>
+    <div class="sensor-card" id="c-hum">
+      <span class="s-icon">💧</span>
+      <div class="s-label">Humidity</div>
+      <div class="s-value" id="v-hum">--</div>
+      <div class="s-unit">%</div>
+      <div class="s-tag" id="t-hum">—</div>
+    </div>
+    <div class="sensor-card" id="c-light">
+      <span class="s-icon">💡</span>
+      <div class="s-label">Light</div>
+      <div class="s-value" id="v-light">--</div>
+      <div class="s-unit">lux</div>
+      <div class="s-tag" id="t-light">—</div>
+    </div>
+    <div class="sensor-card" id="c-aqi">
+      <span class="s-icon">🌬️</span>
+      <div class="s-label">Air Quality</div>
+      <div class="s-value" id="v-aqi">--</div>
+      <div class="s-unit">AQI</div>
+      <div class="s-tag" id="t-aqi">—</div>
+    </div>
+    <div class="sensor-card" id="c-motion">
+      <span class="s-icon">🚶</span>
+      <div class="s-label">Motion</div>
+      <div class="s-value" id="v-motion" style="font-size:1rem;padding-top:6px">--</div>
+      <div class="s-unit">&nbsp;</div>
+      <div class="s-tag" id="t-motion">—</div>
+    </div>
+  </div>
+
+  <!-- Bottom -->
+  <div class="section-label">System Status</div>
+  <div class="bottom-grid">
+
+    <div class="panel">
+      <div class="panel-title">Device Control</div>
+      <div class="device" id="d-ac">
+        <div class="d-name"><span>❄️</span> Air Conditioning</div>
+        <div class="d-tag" id="b-ac">OFF</div>
+      </div>
+      <div class="device" id="d-heater">
+        <div class="d-name"><span>🔥</span> Heater</div>
+        <div class="d-tag" id="b-heater">OFF</div>
+      </div>
+      <div class="device" id="d-fan">
+        <div class="d-name"><span>🌀</span> Fan</div>
+        <div class="d-tag" id="b-fan">OFF</div>
+      </div>
+      <div class="device" id="d-lights">
+        <div class="d-name"><span>💡</span> Lights</div>
+        <div class="d-tag" id="b-lights">OFF</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Temperature History (°C)</div>
+      <canvas id="chart"></canvas>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Action Log</div>
+      <div class="log-scroll" id="log">
+        <div class="log-empty">Start the monitor to see actions.</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const time=()=>new Date().toLocaleTimeString('en-US',{hour12:false});
+
+// Sensor
+const S={temp:24,hum:50,light:300,aqi:50,mP:0.6};
+function read(){
+  S.temp =clamp(S.temp +rnd(-.8,.8),15,40);
+  S.hum  =clamp(S.hum  +rnd(-2,2),  20,90);
+  // Light drift depends on occupancy: occupied = variable, vacant = stable low
+  if(C.occ){
+    S.light=clamp(S.light+rnd(-30,30), 0,1000);
+  }else{
+    S.light=clamp(S.light+rnd(-2,2), 0,15);
+  }
+  S.aqi  =clamp(S.aqi  +rnd(-5,5),   0,300);
+  return{temp:+S.temp.toFixed(1),hum:+S.hum.toFixed(1),light:+S.light.toFixed(1),aqi:+S.aqi.toFixed(1),motion:Math.random()<S.mP};
+}
+const sc={normal:()=>{S.temp=23;S.hum=50;S.light=350;S.aqi=40;S.mP=.6},hot:()=>{S.temp=36},cold:()=>{S.temp=15},humid:()=>{S.hum=82},bad_air:()=>{S.aqi=180},dark:()=>{S.light=5},empty:()=>{S.mP=.02}};
+function applyScenario(n,el){sc[n]&&sc[n]();if(n!=='bad_air')S.aqi=40;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');}
+
+// Controller
+const C={ac:false,heater:false,fan:false,lights:false,alert:false,alertMsg:'',occ:false,lastM:null};
+let actions=0,alerts=0;
+
+function addLog(msg){
+  const log=$('log'),e=log.querySelector('.log-empty');
+  if(e)e.remove();
+  const el=document.createElement('div');
+  el.className='log-row';
+  el.innerHTML=`<span class="log-t">${time()}</span><span>${msg}</span>`;
+  log.prepend(el);
+  if(log.children.length>40)log.lastChild.remove();
+  $('s-actions').textContent=++actions;
+}
+
+function control(r){
+  if(r.motion){C.lastM=Date.now();if(!C.occ){C.occ=true;addLog('🚶 Motion detected — Occupied');}}
+  else if(C.lastM&&Date.now()-C.lastM>10000&&C.occ){C.occ=false;addLog('💤 No motion 10s — Vacant');}
+
+  if(r.temp>=28&&!C.ac){C.ac=true;C.heater=false;addLog(`🌡️ ${r.temp}°C too hot — AC ON`);}
+  else if(r.temp<=19&&!C.heater){C.heater=true;C.ac=false;addLog(`🌡️ ${r.temp}°C too cold — Heater ON`);}
+  else if(r.temp>19&&r.temp<28&&(C.ac||C.heater)){C.ac=C.heater=false;addLog(`✅ ${r.temp}°C comfortable — AC/Heater OFF`);}
+
+  if(r.hum>=65&&!C.fan){C.fan=true;addLog(`💧 Humidity ${r.hum}% — Fan ON`);}
+  else if(r.hum<=55&&C.fan&&r.aqi<100){C.fan=false;addLog('💧 Humidity normal — Fan OFF');}
+
+  if(C.occ){
+    if(r.light<100&&!C.lights){C.lights=true;addLog(`💡 ${r.light} lux — dim, Lights ON`);}
+    else if(r.light>=200&&C.lights){C.lights=false;addLog(`💡 ${r.light} lux — Lights OFF`);}
+  }else if(C.lights){C.lights=false;addLog('💡 Room vacant — Lights OFF');}
+
+  if(r.aqi>=150){if(!C.alert){$('s-alerts').textContent=++alerts;}C.alert=true;C.alertMsg=`Hazardous air quality (AQI ${r.aqi}) — open windows!`;if(!C.fan){C.fan=true;addLog(`😷 AQI ${r.aqi} hazardous — Fan ON`);}}
+  else if(r.aqi>=100){if(!C.alert){$('s-alerts').textContent=++alerts;}C.alert=true;C.alertMsg=`Poor air quality (AQI ${r.aqi}) — ventilating`;if(!C.fan){C.fan=true;addLog(`🌬️ AQI ${r.aqi} poor — Fan ON`);}}
+  else if(C.alert){C.alert=false;addLog('✅ Air quality restored');}
+}
+
+// UI
+function tag(id,text,cls){const e=$(id);e.textContent=text;e.className='s-tag '+(cls||'');}
+function dev(rid,bid,on){$(rid).classList.toggle('on',on);$(bid).textContent=on?'ON':'OFF';}
+function cardCls(id,cls){const e=$(id);e.classList.remove('warn','alert');if(cls)e.classList.add(cls);}
+
+const hist=[];let ctx2;
+function renderUI(r){
+  $('v-temp').textContent=r.temp; $('v-hum').textContent=r.hum;
+  $('v-light').textContent=r.light; $('v-aqi').textContent=r.aqi;
+  $('v-motion').textContent=r.motion?'Detected':'None';
+
+  tag('t-temp',r.temp>=28?'Too Hot':r.temp<=19?'Too Cold':'Comfortable',r.temp>=28?'warn':r.temp<=19?'warn':'good');
+  tag('t-hum',r.hum>=65?'High':r.hum<=30?'Low':'Normal',r.hum>=65?'warn':'good');
+  tag('t-light',r.light<100?'Dim':r.light>700?'Bright':'Good',r.light<100?'warn':'good');
+  tag('t-aqi',r.aqi>=150?'Hazardous':r.aqi>=100?'Poor':r.aqi>=50?'Moderate':'Good',r.aqi>=150?'danger':r.aqi>=100?'warn':r.aqi>=50?'warn':'good');
+  tag('t-motion',r.motion?'Active':'Silent',r.motion?'good':'');
+
+  cardCls('c-temp',r.temp>=28?'alert':r.temp<=19?'warn':'');
+  cardCls('c-hum',r.hum>=65?'warn':'');
+  cardCls('c-aqi',r.aqi>=150?'alert':r.aqi>=100?'warn':'');
+  cardCls('c-light',r.light<100?'warn':'');
+
+  dev('d-ac','b-ac',C.ac); dev('d-heater','b-heater',C.heater);
+  dev('d-fan','b-fan',C.fan); dev('d-lights','b-lights',C.lights);
+
+  $('occ-dot').className='occ-dot'+(C.occ?' on':'');
+  $('occ-text').textContent=C.occ?'Occupied':'Vacant';
+
+  const ab=$('alert-bar');
+  C.alert?(ab.classList.add('show'),$('alert-text').textContent=C.alertMsg):ab.classList.remove('show');
+
+  hist.push(r.temp); if(hist.length>40)hist.shift(); drawChart();
+}
+
+function drawChart(){
+  if(!ctx2)return;
+  const cv=$('chart'),W=cv.offsetWidth,H=140;
+  cv.width=W;cv.height=H;
+  const c=ctx2,d=hist,MIN=15,MAX=40;
+  c.clearRect(0,0,W,H);
+  if(d.length<2)return;
+  const py=v=>H-((v-MIN)/(MAX-MIN))*(H-16)-8;
+
+  c.fillStyle='rgba(239,68,68,.06)';c.fillRect(0,0,W,py(28));
+  c.fillStyle='rgba(59,130,246,.06)';c.fillRect(0,py(19),W,H-py(19));
+  [['rgba(239,68,68,.3)',28],['rgba(59,130,246,.3)',19]].forEach(([col,v])=>{
+    c.strokeStyle=col;c.lineWidth=1;c.setLineDash([4,4]);
+    c.beginPath();c.moveTo(0,py(v));c.lineTo(W,py(v));c.stroke();
+  });
+  c.setLineDash([]);
+
+  const g=c.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'rgba(59,130,246,.15)');g.addColorStop(1,'rgba(59,130,246,0)');
+  c.fillStyle=g;c.beginPath();
+  d.forEach((v,i)=>{const x=(i/(d.length-1))*W;i?c.lineTo(x,py(v)):c.moveTo(x,py(v));});
+  c.lineTo(W,H);c.lineTo(0,H);c.closePath();c.fill();
+
+  c.strokeStyle='#3b82f6';c.lineWidth=2;c.lineJoin='round';c.beginPath();
+  d.forEach((v,i)=>{const x=(i/(d.length-1))*W;i?c.lineTo(x,py(v)):c.moveTo(x,py(v));});
+  c.stroke();
+  c.fillStyle='#3b82f6';c.beginPath();c.arc(W,py(d[d.length-1]),4,0,Math.PI*2);c.fill();
+}
+
+// Loop
+let timer=null,upT=null,cycle=0,t0=null;
+function startMonitor(){
+  if(timer)return;
+  $('btn-start').disabled=true;$('btn-stop').disabled=false;
+  $('live-dot').classList.add('live');$('live-text').textContent='Live';
+  t0=Date.now(); ctx2=$('chart').getContext('2d');
+  timer=setInterval(()=>{cycle++;$('s-cycle').textContent=cycle;const r=read();control(r);renderUI(r);},1500);
+  upT=setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);$('s-uptime').textContent=`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;},1000);
+}
+function stopMonitor(){
+  clearInterval(timer);clearInterval(upT);timer=null;
+  $('btn-start').disabled=false;$('btn-stop').disabled=true;
+  $('live-dot').classList.remove('live');$('live-text').textContent='Stopped';
+  
+  // Reset sensor values
+  S.temp=23;S.hum=50;S.light=350;S.aqi=40;S.mP=.6;
+  
+  // Reset controller state
+  C.ac=false;C.heater=false;C.fan=false;C.lights=false;C.alert=false;C.alertMsg='';C.occ=false;C.lastM=null;
+  
+  // Update UI
+  const r={temp:23,hum:50,light:350,aqi:40,motion:false};
+  renderUI(r);
+  
+  // Clear alert display
+  $('alert-bar').classList.remove('show');
+  hist.length=0;
+}
+setInterval(()=>{$('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});},1000);
+</script>
+</body>
+</html>
