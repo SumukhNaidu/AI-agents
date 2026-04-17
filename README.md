@@ -11,7 +11,11 @@ Features
 
 
 
+
+
+
 Technologies Used
+
  Python
 
  HTML
@@ -27,12 +31,16 @@ Technologies Used
 Rule-Based AI Logic
 
 
+
 Dashboard Features
 Live sensor cards — colour-coded status (good / warn / alert)
 Device panel — AC, Heater, Fan, Lights toggle in real time
 Temperature chart — scrolling history with threshold lines
 Action log — every autonomous decision logged with timestamp
 Scenario buttons — simulate Hot, Cold, Humid, Bad Air, Dark, Empty 
+
+
+
 
 Demonstration Scenarios
 1. Hot Room Condition
