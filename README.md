@@ -6,6 +6,7 @@ The project is developed using Python and demonstrates how autonomous systems ca
 
 
 Features
+
   Real-time room monitoring
   
   Temperature-based AC and heater control
